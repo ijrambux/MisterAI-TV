@@ -1,106 +1,49 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <title>MisterAI Cinema & TV</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <style>
-        body { background: #050505; color: white; }
-        .poster-card { transition: 0.3s; cursor: pointer; }
-        .poster-card:hover { transform: scale(1.05); }
-        .poster-img { aspect-ratio: 2/3; object-fit: cover; border-radius: 10px; border: 1px solid #222; }
-    </style>
-</head>
-<body>
-    <div id="video-overlay" class="fixed inset-0 bg-black z-[100] hidden flex flex-col">
-        <button onclick="closePlayer()" class="absolute top-5 right-5 text-4xl text-white hover:text-red-500">×</button>
-        <video id="main-video" class="w-full h-full" controls autoplay></video>
+<nav class="p-4 bg-black/90 sticky top-0 z-50 flex flex-wrap gap-4 justify-between items-center border-b border-zinc-800">
+    <h1 class="text-xl font-bold text-red-600">MisterAI PRO</h1>
+    <input type="text" id="search" onkeyup="filterChannels()" placeholder="ابحث عن قناة أو فيلم..." class="bg-zinc-800 px-4 py-1.5 rounded-lg text-sm w-full md:w-64 border border-zinc-700 outline-none focus:border-red-500">
+    <div class="flex gap-2">
+        <button onclick="loadData('get_live_streams')" class="bg-red-600 px-4 py-1.5 rounded-lg text-sm font-bold">قنوات</button>
+        <button onclick="loadData('get_vod_streams')" class="bg-zinc-800 px-4 py-1.5 rounded-lg text-sm">أفلام</button>
     </div>
+</nav>
 
-    <nav class="p-4 bg-black/90 sticky top-0 z-50 flex justify-between items-center border-b border-zinc-800">
-        <h1 class="text-xl font-bold text-red-600">MisterAI PRO</h1>
-        <div class="flex gap-2">
-            <button onclick="loadData('get_vod_streams')" class="bg-zinc-900 px-4 py-1.5 rounded-lg text-sm">أفلام</button>
-            <button onclick="loadData('get_series')" class="bg-zinc-900 px-4 py-1.5 rounded-lg text-sm">مسلسلات</button>
-            <button onclick="loadData('get_live_streams')" class="bg-zinc-900 px-4 py-1.5 rounded-lg text-sm">قنوات</button>
-        </div>
-    </nav>
+<script>
+    let allData = []; // لتخزين البيانات محلياً للبحث السريع
 
-    <div id="grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-5 p-6"></div>
+    async function loadData(type) {
+        const grid = document.getElementById('grid');
+        grid.innerHTML = '<div class="col-span-full text-center py-20 animate-pulse">جاري الاتصال بالسيرفر...</div>';
+        
+        try {
+            const res = await fetch(`/api/content?type=${type}`);
+            allData = await res.json();
+            displayData(allData);
+        } catch (e) { grid.innerHTML = "خطأ في الاتصال"; }
+    }
 
-    <script>
-        // بيانات السيرفر (يجب أن تتطابق مع app.py)
-        const SERVER = "http://fortv.cc:8080";
-        const USER = "1A63fh";
-        const PASS = "337373";
-
-        async function loadData(type) {
-            const grid = document.getElementById('grid');
-            grid.innerHTML = '<p class="col-span-full text-center py-10">جاري جلب البيانات...</p>';
+    function displayData(data) {
+        const grid = document.getElementById('grid');
+        grid.innerHTML = '';
+        data.forEach(item => {
+            const name = item.name || item.title;
+            const img = item.stream_icon || 'https://via.placeholder.com/300x450?text=' + name;
             
-            try {
-                const res = await fetch(`/api/content?type=${type}`);
-                const data = await res.json();
-                grid.innerHTML = '';
+            const card = document.createElement('div');
+            card.className = 'poster-card bg-zinc-900 rounded-lg overflow-hidden';
+            card.innerHTML = `
+                <img src="${img}" loading="lazy" class="poster-img w-full">
+                <p class="p-2 text-[10px] text-center truncate">${name}</p>
+            `;
+            // إضافة رابط التشغيل (كما في الكود السابق)
+            card.onclick = () => playVideo(item, currentType); 
+            grid.appendChild(card);
+        });
+    }
 
-                data.slice(0, 100).forEach(item => {
-                    const card = document.createElement('div');
-                    card.className = 'poster-card';
-                    
-                    // معالجة الصور (تختلف بين الأفلام والمسلسلات)
-                    const img = item.stream_icon || item.cover || 'https://via.placeholder.com/300x450?text=No+Poster';
-                    const name = item.name || item.title;
-                    const id = item.stream_id || item.series_id;
-                    const ext = item.container_extension || 'mp4';
-
-                    card.innerHTML = `
-                        <img src="${img}" class="poster-img w-full shadow-lg" onerror="this.src='https://via.placeholder.com/300x450?text=${name}'">
-                        <p class="mt-2 text-xs text-center truncate px-2 text-zinc-400">${name}</p>
-                    `;
-
-                    // تحديد رابط التشغيل بناءً على النوع
-                    card.onclick = () => {
-                        let playUrl = "";
-                        if (type === 'get_vod_streams') {
-                            playUrl = `${SERVER}/movie/${USER}/${PASS}/${id}.${ext}`;
-                        } else if (type === 'get_live_streams') {
-                            playUrl = `${SERVER}/${USER}/${PASS}/${id}`;
-                        } else if (type === 'get_series') {
-                            alert("المسلسلات تحتاج لاختيار الحلقة أولاً، سنضيفها في الخطوة القادمة");
-                            return;
-                        }
-                        playVideo(playUrl);
-                    };
-                    grid.appendChild(card);
-                });
-            } catch (e) { grid.innerHTML = "فشل في تحميل المحتوى"; }
-        }
-
-        function playVideo(url) {
-            const overlay = document.getElementById('video-overlay');
-            const video = document.getElementById('main-video');
-            overlay.classList.remove('hidden');
-            
-            if (Hls.isSupported() && url.includes('m3u8')) {
-                const hls = new Hls();
-                hls.loadSource(url);
-                hls.attachMedia(video);
-            } else {
-                video.src = url;
-            }
-            video.play();
-        }
-
-        function closePlayer() {
-            const overlay = document.getElementById('video-overlay');
-            const video = document.getElementById('main-video');
-            overlay.classList.add('hidden');
-            video.pause();
-            video.src = "";
-        }
-
-        loadData('get_vod_streams');
-    </script>
-</body>
-</html>
+    // بحث فوري بدون تحميل الصفحة
+    function filterChannels() {
+        const query = document.getElementById('search').value.toLowerCase();
+        const filtered = allData.filter(i => (i.name || i.title).toLowerCase().includes(query));
+        displayData(filtered);
+    }
+</script>
