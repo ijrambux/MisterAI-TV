@@ -3,109 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MisterAI PRO TV</title>
+    <title>تسجيل جديد | DZ-Connect</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
-        body { background-color: #050a18; color: #f1f5f9; font-family: 'Inter', sans-serif; overflow-x: hidden; }
-        .nav-glass { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid #1e293b; }
-        .ch-card { background: #0f172a; border: 1px solid #1e293b; transition: 0.3s; cursor: pointer; border-radius: 15px; }
-        .ch-card:hover { border-color: #3b82f6; transform: translateY(-5px); box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
-        #player-overlay { display: none; position: fixed; inset: 0; background: #000; z-index: 1000; flex-direction: column; }
-        video { width: 100%; height: 80vh; background: #000; }
+        body { background-color: #020617; color: #f8fafc; font-family: 'Inter', sans-serif; }
+        .glass-box { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid #1e293b; }
+        .input-style { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 12px; width: 100%; outline: none; transition: 0.3s; }
+        .input-style:focus { border-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.3); }
     </style>
 </head>
-<body>
+<body class="flex items-center justify-center min-h-screen p-4">
 
-    <div id="player-overlay">
-        <div class="p-4 flex justify-between items-center bg-slate-900 border-b border-slate-800">
-            <h2 id="ch-name" class="font-bold text-blue-400">تشغيل الآن...</h2>
-            <button onclick="closeStream()" class="bg-red-600 px-6 py-1 rounded-full text-white font-bold">إغلاق ×</button>
+    <div class="max-w-md w-full glass-box p-8 rounded-3xl shadow-2xl">
+        <div class="bg-blue-600/10 border border-blue-500/30 p-3 rounded-xl mb-6 text-center">
+            <p class="text-blue-400 text-sm font-bold">🚀 هذه منصة تجريبية وسنطورها بدعمكم</p>
         </div>
-        <video id="main-video" controls autoplay playsinline></video>
-        <div class="p-4 text-center text-xs text-slate-500 italic">ملاحظة: إذا لم يعمل البث، تأكد من سماح المتصفح بالمحتوى غير الآمن.</div>
+
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-black mb-2 italic text-white">DZ-Connect</h1>
+            <p class="text-slate-400 text-sm">أنشئ حسابك وانضم للمجتمع الجزائري</p>
+        </div>
+
+        <form onsubmit="return validateForm()">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-500 mb-2 mr-2">اسم المستخدم</label>
+                    <input type="text" placeholder="مثال: Mustafa_DZ" class="input-style" required>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-500 mb-2 mr-2">كلمة السر</label>
+                    <input type="password" id="pass1" placeholder="••••••••" class="input-style" required>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-500 mb-2 mr-2">تأكيد كلمة السر</label>
+                    <input type="password" id="pass2" placeholder="••••••••" class="input-style" required>
+                </div>
+
+                <div class="flex items-center gap-2 py-2">
+                    <input type="checkbox" id="2fa" class="w-4 h-4 accent-blue-500">
+                    <label for="2fa" class="text-xs text-slate-400">تفعيل حماية المصداقية الثنائية (2FA)</label>
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition duration-300 shadow-lg shadow-blue-500/20">
+                    إنشاء حساب
+                </button>
+            </div>
+        </form>
+
+        <p class="text-center mt-6 text-xs text-slate-500">لديك حساب بالفعل؟ <a href="#" class="text-blue-400 hover:underline">سجل دخولك</a></p>
     </div>
 
-    <nav class="sticky top-0 z-50 nav-glass p-4">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-black italic">MISTERAI <span class="text-blue-500">PRO</span></h1>
-            <input type="text" id="search" onkeyup="doSearch()" placeholder="بحث سريع..." class="bg-slate-900 border border-slate-700 rounded-full px-6 py-2 text-sm w-48 md:w-80 outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
-    </nav>
-
-    <main class="max-w-7xl mx-auto p-6">
-        <div id="loading" class="text-center py-20 text-slate-500">جاري الاتصال بسيرفر فرانكفورت...</div>
-        <div id="channels-box" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-6"></div>
-    </main>
-
     <script>
-        let channelList = [];
+        function validateForm() {
+            const p1 = document.getElementById('pass1').value;
+            const p2 = document.getElementById('pass2').value;
 
-        async function init() {
-            try {
-                const res = await fetch('/api/channels');
-                const rawData = await res.text();
-                parseData(rawData);
-                document.getElementById('loading').style.display = 'none';
-            } catch (e) {
-                document.getElementById('loading').innerText = "خطأ في الاتصال";
+            if (p1 !== p2) {
+                alert("❌ خطأ: كلمتا السر غير متطابقتين!");
+                return false;
             }
+            alert("✅ جاري معالجة بياناتك في سيرفر فرانكفورت...");
+            return true;
         }
-
-        function parseData(text) {
-            const lines = text.split('\n');
-            for (let i = 0; i < lines.length; i++) {
-                if (lines[i].includes('#EXTINF')) {
-                    const name = lines[i].split(',')[1] || "Unknown";
-                    const logo = lines[i].match(/tvg-logo="([^"]+)"/)?.[1] || "";
-                    const url = lines[i+1]?.trim();
-                    if(url) channelList.push({name, logo, url});
-                }
-            }
-            render(channelList);
-        }
-
-        function render(data) {
-            const box = document.getElementById('channels-box');
-            box.innerHTML = data.map(c => `
-                <div onclick="openStream('${c.url}', '${c.name}')" class="ch-card p-4 text-center">
-                    <img src="${c.logo}" class="h-12 w-full object-contain mb-3" onerror="this.src='https://via.placeholder.com/100/1e293b/3b82f6?text=TV'">
-                    <p class="text-[10px] font-bold truncate">${c.name}</p>
-                </div>
-            `).join('');
-        }
-
-        function openStream(url, name) {
-            const overlay = document.getElementById('player-overlay');
-            const video = document.getElementById('main-video');
-            document.getElementById('ch-name').innerText = name;
-            overlay.style.display = 'flex';
-
-            if (Hls.isSupported() && url.includes('m3u8')) {
-                const hls = new Hls();
-                hls.loadSource(url);
-                hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-            } else {
-                video.src = url;
-                video.play().catch(err => {
-                    alert("المتصفح حظر التشغيل. يرجى تفعيل 'Insecure Content' من إعدادات الموقع.");
-                });
-            }
-        }
-
-        function closeStream() {
-            const video = document.getElementById('main-video');
-            document.getElementById('player-overlay').style.display = 'none';
-            video.pause(); video.src = "";
-        }
-
-        function doSearch() {
-            const q = document.getElementById('search').value.toLowerCase();
-            render(channelList.filter(x => x.name.toLowerCase().includes(q)));
-        }
-
-        window.onload = init;
     </script>
 </body>
 </html>
