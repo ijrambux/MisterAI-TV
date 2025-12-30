@@ -1,11 +1,11 @@
 from flask import Flask, render_template, jsonify, request
 from flask_cors import CORS
 import requests
+import os
 
 app = Flask(__name__)
 CORS(app)
 
-# روابط السيرفرات الخاصة بك
 XTREAM_SERVERS = [
     "http://fortv.cc:8080/get.php?username=1A63fh&password=337373&type=m3u",
     "http://tvhomesmart.xyz:8080/get.php?username=32930499&password=5req2f3q3&type=m3u_plus",
@@ -26,14 +26,16 @@ def get_servers():
 def proxy():
     target_url = request.args.get('url')
     if not target_url:
-        return "URL is required", 400
+        return "Missing URL", 400
     try:
-        # إضافة User-Agent لضمان عدم حظر السيرفر
-        headers = {'User-Agent': 'Mozilla/5.0'}
-        response = requests.get(target_url, headers=headers, timeout=20)
+        # Render سيرفر حقيقي، لذا يمكننا زيادة وقت الانتظار قليلاً لجلب قنوات أكثر
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+        response = requests.get(target_url, headers=headers, timeout=25)
         return response.text
     except Exception as e:
         return str(e), 500
 
 if __name__ == '__main__':
-    app.run()
+    # Render يمرر رقم البورت عبر متغيرات البيئة
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
