@@ -1,9 +1,10 @@
-from flask import Flask, render_template, requests
+from flask import Flask, render_template, request
+import requests
 import os
 
 app = Flask(__name__)
 
-# الرابط الجديد الذي أرسلته
+# رابط القنوات العربية من GitHub
 M3U_URL = "https://raw.githubusercontent.com/hemzaberkane/ARAB-IPTV/refs/heads/main/ARABIPTV.m3u"
 
 @app.route('/')
@@ -13,11 +14,11 @@ def index():
 @app.route('/api/channels')
 def get_channels():
     try:
-        response = requests.get(M3U_URL)
-        # هنا نقوم بإرسال النص كما هو والمتصفح سيتولى الباقي لسرعة الأداء
+        # تحديد وقت انتظار لضمان عدم تعليق السيرفر
+        response = requests.get(M3U_URL, timeout=15)
         return response.text
-    except:
-        return ""
+    except Exception as e:
+        return str(e), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
