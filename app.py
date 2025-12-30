@@ -1,34 +1,28 @@
-from flask import Flask, render_template, jsonify, request
-import requests
-import re
+from flask import Flask, render_template, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
-# قائمة السيرفرات التي قدمتها
-SERVERS = [
+# قائمة السيرفرات الخاصة بك
+XTREAM_SERVERS = [
     "http://fortv.cc:8080/get.php?username=1A63fh&password=337373&type=m3u",
     "http://tvhomesmart.xyz:8080/get.php?username=32930499&password=5req2f3q3&type=m3u_plus",
-    "http://mytvstream.net:8080/get.php?username=TWEk66&password=036939&type=m3u_plus"
-    # أضف البقية هنا
+    "http://mytvstream.net:8080/get.php?username=TWEk66&password=036939&type=m3u_plus",
+    "http://lobitv65.xyz:8080/get.php?username=svd2884&password=svd.475&type=m3u_plus",
+    "http://fruhd.cc:80/get.php?username=4428202673895240&password=4428202673895240&type=m3u_plus",
+    "http://nuhygo.shop:8080/get.php?username=2643496sec&password=2643496sec&type=m3u_plus",
+    "http://lobitv65.xyz:8080/get.php?username=tkn9985&password=vRkBPApGQFGB&type=m3u_plus",
+    "http://eeee.blue:8080/get.php?username=RN3v5fWQUN&password=DXo6pG4eq5&type=m3u_plus"
 ]
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/api/channels')
-def get_channels():
-    # جلب القنوات من سيرفر واحد في كل مرة لتقليل الضغط
-    server_id = int(request.args.get('s', 0))
-    if server_id >= len(SERVERS): return jsonify([])
-    
-    try:
-        r = requests.get(SERVERS[server_id], timeout=5)
-        # استخراج أول 50 قناة فقط لتسريع الاستجابة
-        matches = re.findall(r'#EXTINF:-1.*?,(.*?)\n(http.*)', r.text)[:50]
-        return jsonify([{"name": m[0], "url": m[1]} for m in matches])
-    except:
-        return jsonify([])
+@app.route('/api/servers')
+def get_servers():
+    return jsonify({"servers": XTREAM_SERVERS})
 
-# مهم جداً لـ Vercel
-app.debug = False
+if __name__ == '__main__':
+    app.run(debug=True)
