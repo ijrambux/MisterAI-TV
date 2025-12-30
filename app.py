@@ -4,8 +4,8 @@ import os
 
 app = Flask(__name__)
 
-# رابط القنوات العربية الذي أرسلته من GitHub
-M3U_URL = "https://raw.githubusercontent.com/hemzaberkane/ARAB-IPTV/refs/heads/main/ARABIPTV.m3u"
+# الرابط العالمي الجديد (يمكنك استبدال <FILENAME> بـ index أو countries/ar)
+M3U_URL = "https://iptv-org.github.io/iptv/index.m3u"
 
 @app.route('/')
 def index():
@@ -14,8 +14,9 @@ def index():
 @app.route('/api/channels')
 def get_channels():
     try:
-        # جلب البيانات من GitHub مع مهلة انتظار لضمان استقرار Render
-        response = requests.get(M3U_URL, timeout=15)
+        # جلب البيانات مع تحديد متصفح وهمي لتجنب الحظر
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        response = requests.get(M3U_URL, headers=headers, timeout=15)
         return response.text
     except Exception as e:
         return f"Error: {str(e)}", 500
