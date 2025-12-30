@@ -2,93 +2,60 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MisterAI IPTV Turbo</title>
+    <title>MisterAI IPTV PRO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { background-color: #0f172a; color: white; }
-        .channel-card { background: #1e293b; transition: 0.3s; }
-        .channel-card:hover { transform: scale(1.05); background: #334155; }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+        body { background: #020617; color: white; font-family: sans-serif; }
+        .channel-card { background: #0f172a; border: 1px solid #1e293b; transition: 0.3s; cursor: pointer; }
+        .channel-card:hover { border-color: #3b82f6; transform: translateY(-3px); }
     </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden">
-
-    <nav class="p-4 bg-slate-900 border-b border-slate-800 flex justify-between items-center">
-        <h1 class="text-xl font-bold text-blue-500"><i class="fas fa-tv mr-2"></i> MisterAI TV</h1>
-        <div id="status" class="text-xs text-slate-400">جاري الاتصال بالسيرفرات...</div>
+<body class="h-screen flex flex-col">
+    <nav class="p-4 border-b border-slate-800 bg-slate-950 flex justify-between items-center">
+        <h1 class="text-xl font-black text-blue-500">MisterAI <span class="text-white">TV</span></h1>
+        <div id="loader" class="text-xs text-blue-400">جاري فحص السيرفرات...</div>
     </nav>
 
     <div class="flex flex-1 overflow-hidden">
-        <main class="flex-1 overflow-y-auto p-4">
-            <div id="channel-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                </div>
-        </main>
-
-        <aside id="player-section" class="w-1/3 bg-black border-r border-slate-800 hidden flex flex-col">
-            <div class="aspect-video">
-                <video id="video" class="w-full h-full" controls autoplay></video>
-            </div>
-            <div class="p-4">
-                <h2 id="current-name" class="text-lg font-bold">اسم القناة</h2>
-                <p class="text-sm text-slate-400">بث مباشر بجودة عالية</p>
-            </div>
+        <main class="flex-1 overflow-y-auto p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4" id="grid"></main>
+        
+        <aside id="player" class="w-96 bg-black border-r border-slate-800 hidden flex flex-col">
+            <video id="video" class="w-full aspect-video" controls autoplay></video>
+            <div class="p-4"><h2 id="ch-name" class="font-bold"></h2></div>
         </aside>
     </div>
 
     <script>
-        const grid = document.getElementById('channel-grid');
-        const video = document.getElementById('video');
+        const grid = document.getElementById('grid');
         const hls = new Hls();
+        
+        async function start() {
+            const res = await fetch('/api/servers');
+            const data = await res.json();
+            data.servers.forEach(url => loadFromM3U(url));
+        }
 
-        async function init() {
+        async function loadFromM3U(url) {
             try {
-                const res = await fetch('/api/servers');
-                const data = await res.json();
-                document.getElementById('status').innerText = `تم العثور على ${data.servers.length} سيرفرات`;
-                
-                // تحميل القنوات من كل سيرفر تدريجياً
-                data.servers.forEach(url => fetchChannels(url));
-            } catch (e) {
-                document.getElementById('status').innerText = "خطأ في الاتصال بالسيرفر الرئيسي";
-            }
+                const r = await fetch(url);
+                const txt = await r.text();
+                const matches = [...txt.matchAll(/#EXTINF:-1.*?tvg-logo="(.*?)".*?,(.*?)\n(http.*)/g)];
+                matches.slice(0, 50).forEach(m => {
+                    const div = document.createElement('div');
+                    div.className = 'channel-card p-3 rounded-xl text-center';
+                    div.innerHTML = `<img src="${m[1]}" class="h-12 mx-auto mb-2" onerror="this.src='https://via.placeholder.com/50'"><p class="text-[10px] truncate">${m[2]}</p>`;
+                    div.onclick = () => {
+                        document.getElementById('player').classList.remove('hidden');
+                        document.getElementById('ch-name').innerText = m[2];
+                        if (Hls.isSupported()) { hls.loadSource(m[3]); hls.attachMedia(document.getElementById('video')); }
+                    };
+                    grid.appendChild(div);
+                });
+                document.getElementById('loader').innerText = "تم التحديث ✅";
+            } catch (e) { console.error("سيرفر بطيء"); }
         }
-
-        async function fetchChannels(url) {
-            try {
-                const res = await fetch(url);
-                const text = await res.text();
-                const regex = /#EXTINF:-1.*?tvg-logo="(.*?)".*?,(.*?)\n(http.*)/g;
-                let match;
-                
-                while ((match = regex.exec(text)) !== null) {
-                    createCard(match[2], match[1], match[3]);
-                }
-            } catch (e) { console.log("سيرفر لم يستجب"); }
-        }
-
-        function createCard(name, logo, url) {
-            const div = document.createElement('div');
-            div.className = 'channel-card p-3 rounded-xl cursor-pointer text-center';
-            div.innerHTML = `
-                <img src="${logo || 'https://via.placeholder.com/100'}" class="h-16 mx-auto mb-2 object-contain" onerror="this.src='https://via.placeholder.com/100'">
-                <p class="text-[10px] font-bold truncate">${name}</p>
-            `;
-            div.onclick = () => {
-                document.getElementById('player-section').classList.remove('hidden');
-                document.getElementById('current-name').innerText = name;
-                if (Hls.isSupported()) {
-                    hls.loadSource(url);
-                    hls.attachMedia(video);
-                }
-            };
-            grid.appendChild(div);
-        }
-
-        init();
+        start();
     </script>
 </body>
 </html>
