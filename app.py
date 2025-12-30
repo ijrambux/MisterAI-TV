@@ -1,40 +1,23 @@
-from flask import Flask, render_template, jsonify, request
-from flask_cors import CORS
-import requests
+from flask import Flask, render_template, requests
 import os
 
 app = Flask(__name__)
-CORS(app)
 
-SERVER = "http://fortv.cc:8080"
-USER = "1A63fh"
-PASS = "337373"
-
-# مخزن مؤقت لتقليل الضغط على السيرفر
-cache = {}
+# الرابط الجديد الذي أرسلته
+M3U_URL = "https://raw.githubusercontent.com/hemzaberkane/ARAB-IPTV/refs/heads/main/ARABIPTV.m3u"
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/api/content')
-def get_content():
-    action = request.args.get('type', 'get_live_streams')
-    
-    # إذا كانت البيانات موجودة في الذاكرة، أرسلها فوراً
-    if action in cache:
-        return jsonify(cache[action])
-
-    url = f"{SERVER}/player_api.php?username={USER}&password={PASS}&action={action}"
+@app.route('/api/channels')
+def get_channels():
     try:
-        response = requests.get(url, timeout=10)
-        data = response.json()
-        # تقليل حجم البيانات المرسلة للمتصفح (أول 200 عنصر فقط للسرعة القصوى)
-        short_data = data[:200]
-        cache[action] = short_data
-        return jsonify(short_data)
+        response = requests.get(M3U_URL)
+        # هنا نقوم بإرسال النص كما هو والمتصفح سيتولى الباقي لسرعة الأداء
+        return response.text
     except:
-        return jsonify([])
+        return ""
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
