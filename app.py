@@ -5,6 +5,7 @@ import requests
 app = Flask(__name__)
 CORS(app)
 
+# قائمة السيرفرات الخاصة بك
 XTREAM_SERVERS = [
     "http://fortv.cc:8080/get.php?username=1A63fh&password=337373&type=m3u",
     "http://tvhomesmart.xyz:8080/get.php?username=32930499&password=5req2f3q3&type=m3u_plus",
@@ -23,13 +24,16 @@ def get_servers():
 
 @app.route('/api/proxy')
 def proxy():
-    """هذه الدالة تجلب محتوى الـ M3U نيابة عن المتصفح لتجنب حظر HTTP"""
     target_url = request.args.get('url')
+    if not target_url:
+        return "URL missing", 400
     try:
-        response = requests.get(target_url, timeout=10)
+        # إضافة headers ليبدو الطلب كأنه من متصفح حقيقي وتجنب الحظر
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        response = requests.get(target_url, headers=headers, timeout=15)
         return response.text
-    except:
-        return "خطأ في جلب البيانات", 500
+    except Exception as e:
+        return str(e), 500
 
 if __name__ == '__main__':
     app.run()
