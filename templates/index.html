@@ -2,110 +2,93 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>MisterAI TV Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MisterAI IPTV Turbo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { background: #020617; color: #f1f5f9; }
-        .channel-card { transition: 0.3s; background: #0f172a; border: 1px solid #1e293b; }
-        .channel-card:hover { transform: translateY(-5px); border-color: #3b82f6; box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.2); }
-        .active-ring { ring: 2px solid #3b82f6; }
+        body { background-color: #0f172a; color: white; }
+        .channel-card { background: #1e293b; transition: 0.3s; }
+        .channel-card:hover { transform: scale(1.05); background: #334155; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
     </style>
 </head>
-<body class="h-screen flex flex-col">
+<body class="h-screen flex flex-col overflow-hidden">
 
-    <nav class="h-16 flex items-center justify-between px-8 bg-[#0f172a] border-b border-slate-800 shadow-lg">
-        <div class="flex items-center gap-2">
-            <i class="fas fa-bolt text-blue-500 text-2xl"></i>
-            <span class="text-xl font-black uppercase tracking-tighter">MisterAI <span class="text-blue-500 text-sm">TV</span></span>
-        </div>
-        <div class="relative w-1/3">
-            <input type="text" id="searchBox" placeholder="ابحث عن قناة في جميع السيرفرات..." 
-                   class="w-full bg-slate-900 border border-slate-700 py-2 px-10 rounded-full text-sm focus:border-blue-500 outline-none">
-            <i class="fas fa-search absolute right-4 top-3 text-slate-500"></i>
-        </div>
-        <div id="connectionStatus" class="text-xs text-green-500"><i class="fas fa-circle mr-1"></i> السيرفر متصل</div>
+    <nav class="p-4 bg-slate-900 border-b border-slate-800 flex justify-between items-center">
+        <h1 class="text-xl font-bold text-blue-500"><i class="fas fa-tv mr-2"></i> MisterAI TV</h1>
+        <div id="status" class="text-xs text-slate-400">جاري الاتصال بالسيرفرات...</div>
     </nav>
 
     <div class="flex flex-1 overflow-hidden">
-        <main class="flex-1 overflow-y-auto p-6">
-            <div id="loadingInfo" class="text-center py-20">
-                <i class="fas fa-spinner fa-spin text-4xl text-blue-500 mb-4"></i>
-                <p class="text-slate-400">جاري فحص السيرفرات ودمج القنوات...</p>
-            </div>
-            
-            <div id="grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-5"></div>
+        <main class="flex-1 overflow-y-auto p-4">
+            <div id="channel-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                </div>
         </main>
 
-        <aside id="playerSide" class="w-[400px] bg-black/50 border-r border-slate-800 p-4 hidden flex flex-col">
-            <div class="aspect-video bg-black rounded-xl overflow-hidden shadow-2xl mb-4">
-                <video id="mainVideo" class="w-full h-full" controls autoplay></video>
+        <aside id="player-section" class="w-1/3 bg-black border-r border-slate-800 hidden flex flex-col">
+            <div class="aspect-video">
+                <video id="video" class="w-full h-full" controls autoplay></video>
             </div>
-            <div class="p-2">
-                <h2 id="channelTitle" class="text-xl font-bold text-white mb-2">اسم القناة</h2>
-                <div class="flex gap-2">
-                    <span class="bg-blue-600/20 text-blue-400 px-3 py-1 rounded-md text-[10px] font-bold uppercase">Live HD</span>
-                    <span class="bg-slate-800 text-slate-400 px-3 py-1 rounded-md text-[10px] font-bold uppercase">MisterAI Stream</span>
-                </div>
+            <div class="p-4">
+                <h2 id="current-name" class="text-lg font-bold">اسم القناة</h2>
+                <p class="text-sm text-slate-400">بث مباشر بجودة عالية</p>
             </div>
         </aside>
     </div>
 
     <script>
-        const grid = document.getElementById('grid');
-        const searchBox = document.getElementById('searchBox');
-        const video = document.getElementById('mainVideo');
+        const grid = document.getElementById('channel-grid');
+        const video = document.getElementById('video');
         const hls = new Hls();
-        let database = [];
 
-        // جلب القنوات عند التشغيل
-        fetch('/api/load_all')
-            .then(r => r.json())
-            .then(data => {
-                database = data;
-                document.getElementById('loadingInfo').style.display = 'none';
-                render(database);
-            });
-
-        function render(list) {
-            grid.innerHTML = '';
-            list.forEach(ch => {
-                const card = document.createElement('div');
-                card.className = 'channel-card p-4 rounded-2xl cursor-pointer group';
-                card.innerHTML = `
-                    <div class="relative mb-3">
-                        <img src="${ch.logo}" class="w-full h-24 object-contain rounded-lg bg-black/40 p-2">
-                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-blue-600/40 rounded-lg transition-all">
-                            <i class="fas fa-play text-white text-2xl"></i>
-                        </div>
-                    </div>
-                    <h3 class="text-xs font-bold truncate text-center">${ch.name}</h3>
-                `;
-                card.onclick = () => playChannel(ch.url, ch.name);
-                grid.appendChild(card);
-            });
-        }
-
-        function playChannel(url, name) {
-            document.getElementById('playerSide').classList.remove('hidden');
-            document.getElementById('channelTitle').innerText = name;
-            
-            if (Hls.isSupported()) {
-                hls.loadSource(url);
-                hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = url;
+        async function init() {
+            try {
+                const res = await fetch('/api/servers');
+                const data = await res.json();
+                document.getElementById('status').innerText = `تم العثور على ${data.servers.length} سيرفرات`;
+                
+                // تحميل القنوات من كل سيرفر تدريجياً
+                data.servers.forEach(url => fetchChannels(url));
+            } catch (e) {
+                document.getElementById('status').innerText = "خطأ في الاتصال بالسيرفر الرئيسي";
             }
         }
 
-        // بحث لحظي
-        searchBox.addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase();
-            const filtered = database.filter(c => c.name.toLowerCase().includes(query));
-            render(filtered);
-        });
+        async function fetchChannels(url) {
+            try {
+                const res = await fetch(url);
+                const text = await res.text();
+                const regex = /#EXTINF:-1.*?tvg-logo="(.*?)".*?,(.*?)\n(http.*)/g;
+                let match;
+                
+                while ((match = regex.exec(text)) !== null) {
+                    createCard(match[2], match[1], match[3]);
+                }
+            } catch (e) { console.log("سيرفر لم يستجب"); }
+        }
+
+        function createCard(name, logo, url) {
+            const div = document.createElement('div');
+            div.className = 'channel-card p-3 rounded-xl cursor-pointer text-center';
+            div.innerHTML = `
+                <img src="${logo || 'https://via.placeholder.com/100'}" class="h-16 mx-auto mb-2 object-contain" onerror="this.src='https://via.placeholder.com/100'">
+                <p class="text-[10px] font-bold truncate">${name}</p>
+            `;
+            div.onclick = () => {
+                document.getElementById('player-section').classList.remove('hidden');
+                document.getElementById('current-name').innerText = name;
+                if (Hls.isSupported()) {
+                    hls.loadSource(url);
+                    hls.attachMedia(video);
+                }
+            };
+            grid.appendChild(div);
+        }
+
+        init();
     </script>
 </body>
 </html>
