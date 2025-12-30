@@ -7,85 +7,120 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
-        body { background-color: #020617; color: #e2e8f0; font-family: sans-serif; }
+        body { background-color: #020617; color: #f8fafc; font-family: sans-serif; overflow-x: hidden; }
         .glass { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); border-bottom: 1px solid #1e293b; }
-        .card { background: #0f172a; border: 1px solid #1e293b; transition: 0.3s; }
-        .card:hover { border-color: #3b82f6; transform: translateY(-5px); }
+        .channel-card { background: #0f172a; border: 1px solid #1e293b; transition: 0.3s; cursor: pointer; border-radius: 1rem; overflow: hidden; }
+        .channel-card:hover { border-color: #3b82f6; transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.2); }
+        #video-container { display: none; position: fixed; inset: 0; background: black; z-index: 100; flex-direction: column; }
+        video { width: 100%; height: 100%; object-fit: contain; }
     </style>
 </head>
 <body>
 
-    <div id="player-box" class="fixed inset-0 z-[100] bg-black hidden flex flex-col">
-        <div class="p-4 glass flex justify-between items-center">
-            <h2 id="title" class="font-bold text-blue-400">تشغيل...</h2>
-            <button onclick="closePlayer()" class="bg-red-600 px-6 py-1 rounded-full text-white">إغلاق ×</button>
+    <div id="video-container">
+        <div class="p-4 glass flex justify-between items-center text-white">
+            <h2 id="current-channel-name" class="font-bold text-blue-400 font-lg">جاري التشغيل...</h2>
+            <button onclick="stopVideo()" class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-full font-bold transition">إغلاق ×</button>
         </div>
-        <video id="video" class="w-full h-full" controls autoplay></video>
+        <video id="video-player" controls autoplay></video>
     </div>
 
-    <nav class="sticky top-0 z-50 glass p-4 flex flex-wrap gap-4 justify-between items-center">
-        <h1 class="text-xl font-black text-white">MisterAI <span class="text-blue-500">PRO</span></h1>
-        <input type="text" id="search" onkeyup="filter()" placeholder="بحث عن قناة..." class="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm w-full md:w-80 outline-none focus:ring-2 focus:ring-blue-500">
+    <nav class="sticky top-0 z-50 glass p-4">
+        <div class="max-w-7xl mx-auto flex flex-wrap gap-4 justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">📺</div>
+                <h1 class="text-xl font-black tracking-tighter">MisterAI <span class="text-blue-500">PRO</span></h1>
+            </div>
+            <input type="text" id="search-input" onkeyup="filterChannels()" placeholder="ابحث عن قناتك..." 
+                   class="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm w-full md:w-80 outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+        </div>
     </nav>
 
-    <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-4 p-6">
-        <p class="col-span-full text-center py-20">جاري جلب القنوات...</p>
-    </div>
+    <main class="max-w-7xl mx-auto p-6">
+        <div id="loading-status" class="text-center py-20">
+            <div class="animate-spin inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mb-4"></div>
+            <p class="text-slate-400">جاري جلب القنوات من السيرفر...</p>
+        </div>
+        
+        <div id="channels-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+            </div>
+    </main>
 
     <script>
         let allChannels = [];
+        const videoContainer = document.getElementById('video-container');
+        const videoPlayer = document.getElementById('video-player');
+        const channelNameDisplay = document.getElementById('current-channel-name');
 
-        async function start() {
-            const res = await fetch('/api/channels');
-            const data = await res.text();
-            const lines = data.split('\n');
-            
-            for (let i = 0; i < lines.length; i++) {
-                if (lines[i].startsWith('#EXTINF')) {
-                    const name = lines[i].split(',')[1] || "قناة";
-                    const logo = lines[i].match(/tvg-logo="([^"]+)"/)?.[1] || "";
-                    const url = lines[i+1]?.trim();
-                    if(url) allChannels.push({name, logo, url});
-                }
+        // وظيفة جلب البيانات من ملف app.py المرفوع على Render
+        async function loadChannels() {
+            try {
+                const response = await fetch('/api/channels'); // استدعاء الرابط الذي أرسلته من GitHub
+                const m3uData = await response.text();
+                parseM3U(m3uData);
+                document.getElementById('loading-status').style.display = 'none';
+            } catch (error) {
+                document.getElementById('loading-status').innerHTML = "فشل في تحميل القنوات ❌";
             }
-            show(allChannels);
         }
 
-        function show(list) {
-            const grid = document.getElementById('grid');
-            grid.innerHTML = list.map(ch => `
-                <div onclick="play('${ch.url}', '${ch.name}')" class="card p-4 rounded-2xl text-center cursor-pointer">
-                    <img src="${ch.logo}" class="h-12 mx-auto mb-2 object-contain" onerror="this.src='https://via.placeholder.com/50?text=TV'">
-                    <p class="text-[10px] font-bold truncate">${ch.name}</p>
+        // معالجة نص M3U وتحويله لبيانات برمجية
+        function parseM3U(data) {
+            const lines = data.split('\n');
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].startsWith('#EXTINF')) {
+                    const name = lines[i].split(',')[1] || "قناة غير معروفة";
+                    const logo = lines[i].match(/tvg-logo="([^"]+)"/)?.[1] || "";
+                    const url = lines[i + 1]?.trim();
+                    if (url && url.startsWith('http')) {
+                        allChannels.push({ name, logo, url });
+                    }
+                }
+            }
+            displayChannels(allChannels);
+        }
+
+        // عرض القنوات في الواجهة الاحترافية
+        function displayChannels(channels) {
+            const grid = document.getElementById('channels-grid');
+            grid.innerHTML = channels.map(ch => `
+                <div onclick="startPlayer('${ch.url}', '${ch.name}')" class="channel-card p-4 text-center shadow-xl">
+                    <img src="${ch.logo}" class="h-16 w-full object-contain mb-3" onerror="this.src='https://via.placeholder.com/150/1e293b/3b82f6?text=TV'">
+                    <p class="text-[10px] font-bold truncate text-slate-300 px-1">${ch.name}</p>
                 </div>
             `).join('');
         }
 
-        function filter() {
-            const q = document.getElementById('search').value.toLowerCase();
-            show(allChannels.filter(c => c.name.toLowerCase().includes(q)));
-        }
+        // تفعيل الضغط والتشغيل
+        function startPlayer(url, name) {
+            console.log("تشغيل الرابط:", url);
+            channelNameDisplay.innerText = name;
+            videoContainer.style.display = 'flex';
 
-        function play(url, name) {
-            const box = document.getElementById('player-box');
-            const v = document.getElementById('video');
-            document.getElementById('title').innerText = name;
-            box.classList.remove('hidden');
-
-            if (Hls.isSupported() && url.includes('m3u8')) {
+            if (Hls.isSupported() && (url.includes('m3u8') || url.includes('.ts'))) {
                 const hls = new Hls();
                 hls.loadSource(url);
-                hls.attachMedia(v);
-            } else { v.src = url; }
+                hls.attachMedia(videoPlayer);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => videoPlayer.play());
+            } else {
+                videoPlayer.src = url;
+                videoPlayer.play();
+            }
         }
 
-        function closePlayer() {
-            const v = document.getElementById('video');
-            document.getElementById('player-box').classList.add('hidden');
-            v.pause(); v.src = "";
+        function stopVideo() {
+            videoContainer.style.display = 'none';
+            videoPlayer.pause();
+            videoPlayer.src = "";
         }
 
-        window.onload = start;
+        function filterChannels() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const filtered = allChannels.filter(c => c.name.toLowerCase().includes(query));
+            displayChannels(filtered);
+        }
+
+        window.onload = loadChannels;
     </script>
 </body>
 </html>
