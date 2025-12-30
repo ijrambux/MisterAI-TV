@@ -3,132 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DZ-Connect | تسجيل جزائري جديد</title>
+    <title>DZ-Connect | عالم جزائري متطور</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #020617; color: #f8fafc; font-family: sans-serif; overflow-x: hidden; }
-        .glass-card { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(15px); border: 1px solid #1e293b; }
-        .input-group { position: relative; }
-        .input-field { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 12px 45px 12px 12px; width: 100%; outline: none; transition: 0.3s; text-align: left; direction: ltr; color: #60a5fa; }
-        .input-field:focus { border-color: #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
-        .flag-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); font-size: 20px; z-index: 10; }
-        #terms-modal { display: none; }
-        #terms-modal.active { display: flex; }
+        body { 
+            background: radial-gradient(circle at center, #001a33 0%, #000000 100%);
+            color: #e0f2fe; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+        }
+        /* تأثير التوهج الأزرق الناري */
+        .fire-blue-glow {
+            box-shadow: 0 0 20px rgba(0, 149, 255, 0.4), inset 0 0 15px rgba(0, 149, 255, 0.2);
+            border: 1px solid rgba(0, 149, 255, 0.5);
+        }
+        .neon-text { text-shadow: 0 0 10px #0095ff, 0 0 20px #0095ff; }
+        .glass-panel { background: rgba(0, 20, 40, 0.7); backdrop-filter: blur(20px); }
+        
+        /* حركة العلم كزر دخول */
+        .flag-btn {
+            transition: transform 0.3s ease, filter 0.3s ease;
+            cursor: pointer;
+        }
+        .flag-btn:hover { transform: scale(1.1); filter: drop-shadow(0 0 15px #10b981); }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-blue-900/20 via-slate-900 to-black">
+<body class="flex items-center justify-center min-h-screen p-6">
 
-    <div id="terms-modal" class="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm items-center justify-center p-4">
-        <div class="glass-card max-w-lg w-full p-6 rounded-2xl border border-slate-700 max-h-[80vh] overflow-y-auto">
-            <h2 class="text-xl font-bold text-green-400 mb-4 flex items-center gap-2">📜 شروط الانضمام إلى DZ-Connect</h2>
-            <div class="text-sm text-slate-300 space-y-4 leading-relaxed text-right">
-                <p class="font-bold text-white">بصفتك مستخدماً لهذه المنصة التجريبية، أنت توافق على:</p>
-                <ul class="list-disc list-inside space-y-2 pr-4">
-                    <li><span class="text-green-500 font-bold">1. الهوية:</span> المنصة مخصصة للجزائريين فقط (05/06/07).</li>
-                    <li><span class="text-green-500 font-bold">2. الاحترام:</span> يمنع السب أو نشر محتوى يثير الفتنة بين أبناء الوطن.</li>
-                    <li><span class="text-green-500 font-bold">3. الأمان:</span> تفعيل حماية المصداقية الثنائية (2FA) لضمان خصوصيتك.</li>
-                    <li><span class="text-green-500 font-bold">4. الطابع التجريبي:</span> المنصة في مرحلة التطوير وسنطورها بدعمكم.</li>
-                    <li><span class="text-green-500 font-bold">5. البيانات:</span> بياناتك مشفرة ومحمية في سيرفر فرانكفورت.</li>
-                </ul>
-            </div>
-            <button onclick="toggleTerms(false)" class="w-full mt-6 bg-green-600 hover:bg-green-700 text-white py-2 rounded-xl transition font-bold">فهمت وموافق</button>
-        </div>
+    <div class="absolute inset-0 opacity-10 pointer-events-none flex justify-around items-center text-6xl">
+        <span>👨‍👩‍👧‍👦</span><span>📱</span><span>AI</span><span>🔒</span><span>🇩🇿</span>
     </div>
 
-    <div class="max-w-md w-full glass-card p-8 rounded-[2rem] shadow-2xl border-t-4 border-t-blue-600">
+    <div class="max-w-md w-full glass-panel fire-blue-glow p-10 rounded-[3rem] relative z-10">
         
-        <div class="bg-blue-600/10 border border-blue-500/20 p-3 rounded-xl mb-6 text-center">
-            <p class="text-blue-400 text-[10px] font-bold">🇩🇿 منصة تجريبية - نطورها بدعمكم يا جزائريين</p>
-        </div>
-
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-black italic tracking-tighter text-white">DZ-CONNECT</h1>
-            <p class="text-slate-500 text-xs mt-1">سجل برقم هاتفك لبدء تجربة عالم جديد</p>
+            <div onclick="alert('مرحباً بك في مجتمعنا!')" class="flag-btn inline-block p-2 bg-slate-800 rounded-lg mb-2">
+                <img src="https://flagcdn.com/w80/dz.png" width="50" alt="Algeria Flag">
+            </div>
+            <p class="text-blue-400 text-xs font-bold animate-pulse">دخول آمن | ترحيب حار</p>
         </div>
 
-        <form id="signupForm" onsubmit="return validateForm(event)">
-            <div class="space-y-4">
-                
-                <div class="input-group">
-                    <label class="block text-[10px] text-slate-500 mb-1 mr-2 text-right">رقم الهاتف (05/06/07)</label>
-                    <span class="flag-icon">🇩🇿</span>
-                    <input type="tel" id="phone" placeholder="0XXXXXXXXX" class="input-field" required>
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-black neon-text italic tracking-widest text-white mb-2 underline decoration-blue-500">DZ-CONNECT</h1>
+            <p class="text-slate-400 text-[10px]">منصة اجتماعية أسرية متطورة للجزائريين</p>
+        </div>
+
+        <form id="proSignupForm" onsubmit="return validateDZ(event)">
+            <div class="space-y-6">
+                <div class="relative">
+                    <label class="block text-[10px] text-blue-300 mb-2 mr-4">رقم الهاتف (حصري للجزائر)</label>
+                    <input type="tel" id="dz_phone" placeholder="05/06/07XXXXXXXX" 
+                        class="w-full bg-black/50 border border-blue-900/50 rounded-2xl py-3 px-5 text-blue-100 outline-none focus:border-blue-400 transition-all text-left dir-ltr">
                 </div>
 
-                <div>
-                    <label class="block text-[10px] text-slate-500 mb-1 mr-2 text-right">كلمة السر</label>
-                    <input type="password" id="pass1" placeholder="••••••••" class="input-field" required style="text-align: right; direction: rtl;">
-                </div>
-
-                <div>
-                    <label class="block text-[10px] text-slate-500 mb-1 mr-2 text-right">تأكيد كلمة السر</label>
-                    <input type="password" id="pass2" placeholder="••••••••" class="input-field" required style="text-align: right; direction: rtl;">
-                </div>
-
-                <div class="space-y-2 py-2">
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" id="2fa" class="w-4 h-4 accent-blue-500">
-                        <label for="2fa" class="text-[10px] text-slate-400 font-bold italic">تفعيل المصداقية الثنائية (2FA) 🛡️</label>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <input type="password" id="p1" placeholder="كلمة السر" 
+                            class="w-full bg-black/50 border border-blue-900/50 rounded-2xl py-3 px-4 text-sm outline-none focus:border-blue-400">
                     </div>
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" id="accept-terms" class="w-4 h-4 accent-green-500">
-                        <label for="accept-terms" class="text-[10px] text-slate-400">
-                            أوافق على <button type="button" onclick="toggleTerms(true)" class="text-blue-400 underline">شروط الاستخدام</button>
-                        </label>
+                    <div>
+                        <input type="password" id="p2" placeholder="تأكيد السر" 
+                            class="w-full bg-black/50 border border-blue-900/50 rounded-2xl py-3 px-4 text-sm outline-none focus:border-blue-400">
                     </div>
                 </div>
 
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all active:scale-95 shadow-lg shadow-blue-900/20">
-                    إنشاء حسابي الآن
+                <div class="bg-blue-950/30 p-4 rounded-2xl border border-blue-900/30 text-[10px] leading-relaxed">
+                    <p class="text-blue-200 mb-2 font-bold">📜 ميثاق المجتمع:</p>
+                    <ul class="text-slate-400 space-y-1">
+                        <li>• الاحترام المتبادل بين العائلات والأسرة.</li>
+                        <li>• حماية البيانات مشفرة في سيرفر فرانكفورت.</li>
+                        <li>• يمنع أي محتوى غير لائق أو مخالف للهوية.</li>
+                    </ul>
+                    <div class="mt-3 flex items-center gap-2">
+                        <input type="checkbox" id="agree" class="accent-blue-500">
+                        <label for="agree" class="text-blue-400">أوافق على ميثاق الأسرة</label>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-500 hover:to-blue-700 text-white font-black py-4 rounded-2xl transition-all shadow-lg shadow-blue-500/30 active:scale-95">
+                    انضمام للمجتمع الآن
                 </button>
             </div>
         </form>
 
-        <p class="text-center mt-6 text-[10px] text-slate-600 italic">سيرفر فرانكفورت مؤمن | MisterAI PRO</p>
+        <p class="text-center mt-8 text-[9px] text-slate-500 tracking-tighter">BY MisterAI PRO - SECURE CLOUD SERVERS</p>
     </div>
 
     <script>
-        function toggleTerms(show) {
-            const modal = document.getElementById('terms-modal');
-            if(show) modal.classList.add('active');
-            else modal.classList.remove('active');
-        }
+        function validateDZ(e) {
+            e.preventDefault();
+            const phone = document.getElementById('dz_phone').value;
+            const pass1 = document.getElementById('p1').value;
+            const pass2 = document.getElementById('p2').value;
+            const agree = document.getElementById('agree').checked;
 
-        function validateForm(event) {
-            event.preventDefault();
-            const phone = document.getElementById('phone').value;
-            const p1 = document.getElementById('pass1').value;
-            const p2 = document.getElementById('pass2').value;
-            const accepted = document.getElementById('accept-terms').checked;
-
-            // شرط الرقم الجزائري
-            const dzPhoneRegex = /^(05|06|07)[0-9]{8}$/;
-            if (!dzPhoneRegex.test(phone)) {
-                alert("❌ خطأ: يرجى إدخال رقم هاتف جزائري صحيح يبدأ بـ 05، 06 أو 07.");
-                return false;
+            if(!/^(05|06|07)[0-9]{8}$/.test(phone)) {
+                alert("❌ رقم الهاتف يجب أن يكون جزائرياً صحيحاً (05/06/07).");
+                return;
+            }
+            if(pass1 !== pass2) {
+                alert("❌ كلمات السر غير متطابقة.");
+                return;
+            }
+            if(!agree) {
+                alert("❌ يرجى الموافقة على ميثاق المجتمع الأسري.");
+                return;
             }
 
-            // شرط تطابق كلمة السر
-            if (p1 !== p2) {
-                alert("❌ خطأ: كلمتا السر غير متطابقتين!");
-                return false;
-            }
-
-            // شرط الطول
-            if (p1.length < 8) {
-                alert("❌ للأمان: كلمة السر يجب أن تكون 8 خانات على الأقل.");
-                return false;
-            }
-
-            // شرط الموافقة على الشروط
-            if (!accepted) {
-                alert("❌ يرجى الموافقة على شروط المنصة أولاً.");
-                return false;
-            }
-
-            alert("✅ رائع يا MisterAI! تم قبول البيانات وجاري الربط بسيرفر فرانكفورت...");
-            // هنا يتم إرسال البيانات للسيرفر لاحقاً
-            return true;
+            alert("🚀 يا MisterAI! جاري إرسال بياناتك لسيرفر فرانكفورت لتأمين حسابك.");
         }
     </script>
 </body>
