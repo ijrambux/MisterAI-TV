@@ -6,10 +6,12 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-# سيرفر التجربة الأساسي
 SERVER = "http://fortv.cc:8080"
 USER = "1A63fh"
 PASS = "337373"
+
+# مخزن مؤقت لتقليل الضغط على السيرفر
+cache = {}
 
 @app.route('/')
 def index():
@@ -17,16 +19,22 @@ def index():
 
 @app.route('/api/content')
 def get_content():
-    # نأخذ نوع المحتوى من المتصفح (vod_streams أو series أو live_streams)
-    action = request.args.get('type', 'get_vod_streams')
+    action = request.args.get('type', 'get_live_streams')
+    
+    # إذا كانت البيانات موجودة في الذاكرة، أرسلها فوراً
+    if action in cache:
+        return jsonify(cache[action])
+
     url = f"{SERVER}/player_api.php?username={USER}&password={PASS}&action={action}"
     try:
-        headers = {'User-Agent': 'Mozilla/5.0'}
-        response = requests.get(url, headers=headers, timeout=25)
-        # نرسل أول 60 عنصر فقط لضمان السرعة في البداية
-        return jsonify(response.json()[:60])
-    except Exception as e:
-        return jsonify({"error": str(e)})
+        response = requests.get(url, timeout=10)
+        data = response.json()
+        # تقليل حجم البيانات المرسلة للمتصفح (أول 200 عنصر فقط للسرعة القصوى)
+        short_data = data[:200]
+        cache[action] = short_data
+        return jsonify(short_data)
+    except:
+        return jsonify([])
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
