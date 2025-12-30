@@ -1,11 +1,11 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, Response
 import requests
 import os
 
 app = Flask(__name__)
 
-# الرابط العالمي الجديد (يمكنك استبدال <FILENAME> بـ index أو countries/ar)
-M3U_URL = "https://iptv-org.github.io/iptv/index.m3u"
+# الرابط العالمي المستقر الذي يدعم HTTPS
+M3U_URL = "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/ar.m3u"
 
 @app.route('/')
 def index():
@@ -14,12 +14,11 @@ def index():
 @app.route('/api/channels')
 def get_channels():
     try:
-        # جلب البيانات مع تحديد متصفح وهمي لتجنب الحظر
         headers = {'User-Agent': 'Mozilla/5.0'}
         response = requests.get(M3U_URL, headers=headers, timeout=15)
-        return response.text
+        return Response(response.text, mimetype='text/plain')
     except Exception as e:
-        return f"Error: {str(e)}", 500
+        return str(e), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
